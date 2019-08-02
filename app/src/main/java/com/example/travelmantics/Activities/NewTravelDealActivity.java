@@ -4,21 +4,26 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.example.travelmantics.Model.TravelDeal;
 import com.example.travelmantics.R;
 import com.example.travelmantics.Utils.FirebaseUtil;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
@@ -26,14 +31,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.squareup.picasso.Picasso;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class MainActivity extends AppCompatActivity {
-    private static final int REQUEST_CODE = 1;
+public class NewTravelDealActivity extends AppCompatActivity {
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
     private StorageReference storageReference;
@@ -43,11 +45,13 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton dealImage;
     private ProgressDialog progressDialog;
     private Uri imageURI;
+    private TravelDeal travelDeal;
+    private Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_new_travel_deal);
 
         FirebaseUtil.openFbReference("traveldeals");
 
@@ -66,10 +70,23 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 CropImage.activity()
                         .setGuidelines(CropImageView.Guidelines.ON)
-                        .start(MainActivity.this);
+                        .start(NewTravelDealActivity.this);
 
             }
         });
+        intent = getIntent();
+        travelDeal = (TravelDeal) intent.getSerializableExtra("TravelDeal");
+        if (travelDeal == null){
+            travelDeal = new TravelDeal();
+        }else {
+            titleTxt.setText(travelDeal.getTitle());
+            descriptionTxt.setText(travelDeal.getDescription());
+            priceTxt.setText(travelDeal.getPrice());
+
+            Picasso.get()
+                    .load(travelDeal.getImageUrl())
+                    .into(dealImage);
+        }
     }
 
     @Override
@@ -98,7 +115,10 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.save_action:
                 saveDeal();
-                clean();
+                return true;
+
+            case R.id.action_delete:
+                deleteDeal();
                 return true;
 
             default:
@@ -114,6 +134,10 @@ public class MainActivity extends AppCompatActivity {
         titleTxt.requestFocus();
     }
 
+    private void backToTravelListActivity(){
+        startActivity(new Intent(getApplicationContext(),TravelDealListActivity.class));
+    }
+
     private void saveDeal() {
         progressDialog.setMessage("Saving deal...");
         progressDialog.show();
@@ -122,7 +146,8 @@ public class MainActivity extends AppCompatActivity {
         final String description = descriptionTxt.getText().toString().trim();
         final String price = priceTxt.getText().toString().trim();
 
-        if (!title.isEmpty() && !description.isEmpty() && !price.isEmpty() && imageURI != null){
+        if (!title.isEmpty() && !description.isEmpty()
+                && !price.isEmpty() && imageURI != null){
 
             final StorageReference filePath = storageReference.child("TravelDeal_Images")
                     .child((imageURI.getLastPathSegment()));
@@ -135,10 +160,18 @@ public class MainActivity extends AppCompatActivity {
                             public void onSuccess(Uri uri) {
                                String downloadUrl = uri.toString();
 
-                                TravelDeal travelDeal = new TravelDeal(title, description, price, downloadUrl);
-                                databaseReference.push().setValue(travelDeal);
-                                progressDialog.dismiss();
-                                Snackbar.make(getCurrentFocus(), getString(R.string.snackbar_text_save_deal), Snackbar.LENGTH_SHORT).show();
+                                   TravelDeal newTravelDeal = new TravelDeal(title,description,price,downloadUrl);
+                                   databaseReference.push().setValue(newTravelDeal).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                       @Override
+                                       public void onComplete(@NonNull Task<Void> task) {
+                                           progressDialog.dismiss();
+                                           Snackbar.make(getCurrentFocus(), getString(R.string.snackbar_text_save_deal), Snackbar.LENGTH_SHORT).show();
+                                           clean();
+                                           backToTravelListActivity();
+                                       }
+                                   });
+
+
                             }
                         });
                     }
@@ -147,4 +180,42 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
+    private void deleteDeal(){
+        if (travelDeal == null){
+            Toast.makeText(getApplicationContext(),"Save the deal before deleting",Toast.LENGTH_SHORT).show();
+            return;
+        }else {
+            final AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+            alertDialog.setMessage("Are you sure you want to delete this deal?");
+            alertDialog.setCancelable(true);
+            alertDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(final DialogInterface dialogInterface, int i) {
+                    databaseReference.child(travelDeal.getId()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            Toast.makeText(getApplicationContext(),"Deal has been deleted",Toast.LENGTH_SHORT).show();
+                            dialogInterface.dismiss();
+                            clean();
+                            backToTravelListActivity();
+                        }
+                    });
+
+                }
+            });
+
+            alertDialog.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    dialogInterface.dismiss();
+                }
+            });
+            alertDialog.show();
+
+        }
+
+    }
+
+
 }

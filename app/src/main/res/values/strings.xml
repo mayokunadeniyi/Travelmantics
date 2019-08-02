@@ -5,4 +5,6 @@
     <string name="description">Description</string>
     <string name="save_txt">Save</string>
     <string name="snackbar_text_save_deal">Deal Saved!</string>
+    <string name="new_travel_deal">New Travel Deal</string>
+    <string name="delete_deal">Delete Deal</string>
 </resources>

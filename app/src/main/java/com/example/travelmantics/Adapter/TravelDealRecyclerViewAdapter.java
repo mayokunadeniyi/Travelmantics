@@ -1,6 +1,7 @@
 package com.example.travelmantics.Adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.travelmantics.Activities.NewTravelDealActivity;
 import com.example.travelmantics.Model.TravelDeal;
 import com.example.travelmantics.R;
 import com.squareup.picasso.Picasso;
@@ -52,11 +54,12 @@ public class TravelDealRecyclerViewAdapter extends RecyclerView.Adapter<TravelDe
         return travelDealList.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         public ImageView dealImage;
         public TextView dealName;
         public TextView dealDescription;
         public TextView dealPrice;
+        private Context context;
         String userID;
 
         public ViewHolder(@NonNull View itemView, Context context) {
@@ -65,14 +68,17 @@ public class TravelDealRecyclerViewAdapter extends RecyclerView.Adapter<TravelDe
             dealName = (TextView) itemView.findViewById(R.id.deal_name);
             dealDescription = (TextView) itemView.findViewById(R.id.deal_description);
             dealPrice = (TextView) itemView.findViewById(R.id.deal_price);
+            this.context = context;
             userID = null;
+            itemView.setOnClickListener(this);
+        }
 
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-
-                }
-            });
+        @Override
+        public void onClick(View view) {
+            TravelDeal travelDeal = travelDealList.get(getAdapterPosition());
+            Intent intent = new Intent(context, NewTravelDealActivity.class);
+            intent.putExtra("TravelDeal",travelDeal);
+            context.startActivity(intent);
         }
     }
 }

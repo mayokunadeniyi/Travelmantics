@@ -6,7 +6,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import com.example.travelmantics.Adapter.TravelDealRecyclerViewAdapter;
 import com.example.travelmantics.Model.TravelDeal;
@@ -51,6 +54,7 @@ public class TravelDealListActivity extends AppCompatActivity {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                 TravelDeal travelDeal = dataSnapshot.getValue(TravelDeal.class);
+                travelDeal.setId(dataSnapshot.getKey());
                 travelDealList.add(travelDeal);
                 Collections.reverse(travelDealList);
 
@@ -79,5 +83,20 @@ public class TravelDealListActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.travel_list_activity_menu,menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.insert_new_deal:
+                startActivity(new Intent(TravelDealListActivity.this, NewTravelDealActivity.class));
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

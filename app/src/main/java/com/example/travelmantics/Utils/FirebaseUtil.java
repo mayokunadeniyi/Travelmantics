@@ -23,8 +23,8 @@ public class FirebaseUtil {
             firebaseUtil = new FirebaseUtil();
             firebaseDatabase = FirebaseDatabase.getInstance();
             storageReference = FirebaseStorage.getInstance().getReference();
-            travelDealArrayList = new ArrayList<>();
         }
+        travelDealArrayList = new ArrayList<>();
         databaseReference = firebaseDatabase.getReference().child(reference);
     }
 
