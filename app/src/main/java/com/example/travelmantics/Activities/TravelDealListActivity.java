@@ -17,8 +17,11 @@ import com.example.travelmantics.Model.TravelDeal;
 import com.example.travelmantics.R;
 import com.example.travelmantics.Utils.FirebaseUtil;
 import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.auth.IdpResponse;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -33,7 +36,10 @@ public class TravelDealListActivity extends AppCompatActivity {
     private TravelDealRecyclerViewAdapter travelDealRecyclerViewAdapter;
     private List<TravelDeal> travelDealList;
     private FirebaseDatabase firebaseDatabase;
+    private FirebaseAuth firebaseAuth;
+    private FirebaseUser firebaseUser;
     private DatabaseReference databaseReference;
+    private int RC_SIGN_IN = 123;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,12 +51,31 @@ public class TravelDealListActivity extends AppCompatActivity {
         databaseReference = FirebaseUtil.databaseReference;
         travelDealList = FirebaseUtil.travelDealArrayList;
         databaseReference.keepSynced(true);
+        firebaseAuth = FirebaseUtil.firebaseAuth;
+        firebaseUser = firebaseAuth.getCurrentUser();
 
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        firebaseUser = firebaseAuth.getCurrentUser();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        FirebaseUtil.detachListener();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        travelDealList.clear();
         recyclerView = (RecyclerView) findViewById(R.id.travel_deal_recyclerview);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-
+        FirebaseUtil.attachListener();
         databaseReference.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
@@ -65,7 +90,7 @@ public class TravelDealListActivity extends AppCompatActivity {
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
+                travelDealRecyclerViewAdapter.notifyDataSetChanged();
             }
 
             @Override
@@ -83,25 +108,6 @@ public class TravelDealListActivity extends AppCompatActivity {
 
             }
         });
-
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        FirebaseUtil.detachListener();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        FirebaseUtil.attachListener();
-        Toast.makeText(this,"Welcome back!",Toast.LENGTH_LONG).show();
 
     }
 
