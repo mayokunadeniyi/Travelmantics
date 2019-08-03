@@ -2,6 +2,7 @@ package com.example.travelmantics.Activities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.AlertDialog;
@@ -10,6 +11,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -35,6 +37,8 @@ import com.squareup.picasso.Picasso;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
+import java.util.Objects;
+
 public class NewTravelDealActivity extends AppCompatActivity {
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
@@ -46,14 +50,12 @@ public class NewTravelDealActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
     private Uri imageURI;
     private TravelDeal travelDeal;
-    private Intent intent;
+    private String downloadUrl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_travel_deal);
-
-        FirebaseUtil.openFbReference("traveldeals");
 
         firebaseDatabase = FirebaseUtil.firebaseDatabase;
         databaseReference = FirebaseUtil.databaseReference;
@@ -65,41 +67,42 @@ public class NewTravelDealActivity extends AppCompatActivity {
         priceTxt = (EditText) findViewById(R.id.txtPrice);
         dealImage = (ImageButton) findViewById(R.id.new_deal_image);
 
+        Intent intent = getIntent();
+        TravelDeal travelDeal = (TravelDeal) intent.getSerializableExtra("TravelDeal");
+        if (travelDeal == null) {
+            travelDeal = new TravelDeal();
+        }
+        this.travelDeal = travelDeal;
+        titleTxt.setText(travelDeal.getTitle());
+        descriptionTxt.setText(travelDeal.getDescription());
+        priceTxt.setText(travelDeal.getPrice());
+
         dealImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 CropImage.activity()
                         .setGuidelines(CropImageView.Guidelines.ON)
                         .start(NewTravelDealActivity.this);
-
             }
         });
-        intent = getIntent();
-        travelDeal = (TravelDeal) intent.getSerializableExtra("TravelDeal");
-        if (travelDeal == null){
-            travelDeal = new TravelDeal();
-        }else {
-            titleTxt.setText(travelDeal.getTitle());
-            descriptionTxt.setText(travelDeal.getDescription());
-            priceTxt.setText(travelDeal.getPrice());
 
-            Picasso.get()
-                    .load(travelDeal.getImageUrl())
-                    .into(dealImage);
-        }
+        Picasso.get()
+                .load(travelDeal.getImageUrl())
+                .into(dealImage);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-            CropImage.ActivityResult result = CropImage.getActivityResult(data);
-            if (resultCode == RESULT_OK) {
-                imageURI = result.getUri();
-            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
-                Exception error = result.getError();
-            }
-            dealImage.setImageURI(imageURI);
+        CropImage.ActivityResult result = CropImage.getActivityResult(data);
+        if (resultCode == RESULT_OK) {
+            imageURI = result.getUri();
+        } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+            Exception error = result.getError();
+            Log.d("ImageError",error.getMessage());
+        }
+        dealImage.setImageURI(imageURI);
 
 
     }
@@ -107,9 +110,19 @@ public class NewTravelDealActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
+        if (FirebaseUtil.isAdmin == true) {
+            menu.findItem(R.id.action_delete).setVisible(true);
+            menu.findItem(R.id.save_action).setVisible(true);
+            enableEditTexts(true);
+        } else {
+            menu.findItem(R.id.action_delete).setVisible(false);
+            menu.findItem(R.id.save_action).setVisible(false);
+            enableEditTexts(false);
+        }
         return true;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
@@ -134,74 +147,106 @@ public class NewTravelDealActivity extends AppCompatActivity {
         titleTxt.requestFocus();
     }
 
-    private void backToTravelListActivity(){
-        startActivity(new Intent(getApplicationContext(),TravelDealListActivity.class));
+    private void backToTravelListActivity() {
+        startActivity(new Intent(getApplicationContext(), TravelDealListActivity.class));
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private void saveDeal() {
         progressDialog.setMessage("Saving deal...");
         progressDialog.show();
 
-        final String title = titleTxt.getText().toString().trim();
-        final String description = descriptionTxt.getText().toString().trim();
-        final String price = priceTxt.getText().toString().trim();
+        if (travelDeal.getId() != null){
 
-        if (!title.isEmpty() && !description.isEmpty()
-                && !price.isEmpty() && imageURI != null){
+            travelDeal.setImageUrl(travelDeal.getImageUrl());
+            travelDeal.setTitle(titleTxt.getText().toString());
+            travelDeal.setDescription(descriptionTxt.getText().toString());
+            travelDeal.setPrice(priceTxt.getText().toString());
 
+                databaseReference.child(travelDeal.getId()).setValue(travelDeal).addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Toast.makeText(NewTravelDealActivity.this,"Deal Saved",Toast.LENGTH_LONG).show();
+                        clean();
+                        backToTravelListActivity();
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.d("PushError",e.getMessage());
+                    }
+                });
+        }
+        else {
             final StorageReference filePath = storageReference.child("TravelDeal_Images")
-                    .child((imageURI.getLastPathSegment()));
+                    .child((Objects.requireNonNull(imageURI.getLastPathSegment())));
             filePath.putFile(imageURI).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
                 @Override
-                public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-                    if (task.isSuccessful()){
+                public void onComplete(@NonNull final Task<UploadTask.TaskSnapshot> task) {
+                    String imageName = task.getResult().getStorage().getPath();
+                    Log.d("imageName",imageName);
+                    travelDeal.setImageName(imageName);
+                    if (task.isSuccessful()) {
                         filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                             @Override
                             public void onSuccess(Uri uri) {
-                               String downloadUrl = uri.toString();
+                                downloadUrl = uri.toString();
+                                travelDeal.setImageUrl(downloadUrl);
+                                travelDeal.setTitle(titleTxt.getText().toString());
+                                travelDeal.setDescription(descriptionTxt.getText().toString());
+                                travelDeal.setPrice(priceTxt.getText().toString());
 
-                                   TravelDeal newTravelDeal = new TravelDeal(title,description,price,downloadUrl);
-                                   databaseReference.push().setValue(newTravelDeal).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                       @Override
-                                       public void onComplete(@NonNull Task<Void> task) {
-                                           progressDialog.dismiss();
-                                           Snackbar.make(getCurrentFocus(), getString(R.string.snackbar_text_save_deal), Snackbar.LENGTH_SHORT).show();
-                                           clean();
-                                           backToTravelListActivity();
-                                       }
-                                   });
-
-
+                                if (travelDeal.getId() == null){
+                                    Log.d("checkID",travelDeal.getImageUrl() + "\n\n" + travelDeal.getTitle() + "\n\n" + travelDeal.getDescription());
+                                    databaseReference.push().setValue(travelDeal).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            Toast.makeText(NewTravelDealActivity.this,"Deal Saved",Toast.LENGTH_LONG).show();
+                                            clean();
+                                            backToTravelListActivity();
+                                        }
+                                    }).addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            Log.d("PushError",e.getMessage());
+                                        }
+                                    });
+                                }
                             }
                         });
                     }
                 }
             });
-        }
 
+        }
     }
 
-    private void deleteDeal(){
-        if (travelDeal == null){
-            Toast.makeText(getApplicationContext(),"Save the deal before deleting",Toast.LENGTH_SHORT).show();
+    private void deleteDeal() {
+        if (travelDeal == null) {
+            Toast.makeText(getApplicationContext(), "Save the deal before deleting", Toast.LENGTH_SHORT).show();
             return;
-        }else {
+        } else {
             final AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
             alertDialog.setMessage("Are you sure you want to delete this deal?");
             alertDialog.setCancelable(true);
             alertDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(final DialogInterface dialogInterface, int i) {
-                    databaseReference.child(travelDeal.getId()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                    databaseReference.child(travelDeal.getId()).removeValue();
+                    StorageReference picRef = FirebaseUtil.firebaseStorage.getReference().child(travelDeal.getImageName());
+                    picRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            Toast.makeText(getApplicationContext(),"Deal has been deleted",Toast.LENGTH_SHORT).show();
-                            dialogInterface.dismiss();
-                            clean();
+                        public void onSuccess(Void aVoid) {
+                          Log.d("Delete Image","Successful deletion");
+                            Toast.makeText(NewTravelDealActivity.this,"Deal Deleted!",Toast.LENGTH_SHORT).show();
                             backToTravelListActivity();
                         }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.d("Delete Image",e.getMessage());
+                        }
                     });
-
                 }
             });
 
@@ -215,6 +260,13 @@ public class NewTravelDealActivity extends AppCompatActivity {
 
         }
 
+    }
+
+    private void enableEditTexts(boolean state) {
+        titleTxt.setEnabled(state);
+        descriptionTxt.setEnabled(state);
+        priceTxt.setEnabled(state);
+        dealImage.setEnabled(state);
     }
 
 

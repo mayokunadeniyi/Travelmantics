@@ -10,11 +10,15 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.example.travelmantics.Adapter.TravelDealRecyclerViewAdapter;
 import com.example.travelmantics.Model.TravelDeal;
 import com.example.travelmantics.R;
 import com.example.travelmantics.Utils.FirebaseUtil;
+import com.firebase.ui.auth.AuthUI;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -36,7 +40,7 @@ public class TravelDealListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_travel_deal_list);
 
-        FirebaseUtil.openFbReference("traveldeals");
+        FirebaseUtil.openFbReference("traveldeals",this);
         firebaseDatabase = FirebaseUtil.firebaseDatabase;
         databaseReference = FirebaseUtil.databaseReference;
         travelDealList = FirebaseUtil.travelDealArrayList;
@@ -86,8 +90,27 @@ public class TravelDealListActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        FirebaseUtil.detachListener();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        FirebaseUtil.attachListener();
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.travel_list_activity_menu,menu);
+        MenuItem menuItem = menu.findItem(R.id.insert_new_deal);
+
+        if (FirebaseUtil.isAdmin == true){
+            menuItem.setVisible(true);
+        }else {
+            menuItem.setVisible(false);
+        }
         return true;
     }
 
@@ -96,7 +119,27 @@ public class TravelDealListActivity extends AppCompatActivity {
         switch (item.getItemId()){
             case R.id.insert_new_deal:
                 startActivity(new Intent(TravelDealListActivity.this, NewTravelDealActivity.class));
+                return true;
+            case R.id.action_logout:
+                signOut();
+                return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void signOut() {
+        AuthUI.getInstance()
+                .signOut(this)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    public void onComplete(@NonNull Task<Void> task) {
+                        Toast.makeText(getApplicationContext(),"Signed out!",Toast.LENGTH_LONG);
+                        FirebaseUtil.attachListener();
+                    }
+                });
+        FirebaseUtil.detachListener();
+    }
+
+    public void showMenu(){
+        invalidateOptionsMenu();
     }
 }
