@@ -23,15 +23,16 @@ public class TravelDealRecyclerViewAdapter extends RecyclerView.Adapter<TravelDe
     private Context context;
     private List<TravelDeal> travelDealList;
 
-    public TravelDealRecyclerViewAdapter(Context context,List<TravelDeal> travelDealList){
+    public TravelDealRecyclerViewAdapter(Context context, List<TravelDeal> travelDealList) {
         this.context = context;
         this.travelDealList = travelDealList;
     }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.travel_deal_layout,parent,false);
-        return new ViewHolder(view,context);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.travel_deal_layout, parent, false);
+        return new ViewHolder(view, context);
     }
 
     @Override
@@ -77,7 +78,7 @@ public class TravelDealRecyclerViewAdapter extends RecyclerView.Adapter<TravelDe
         public void onClick(View view) {
             TravelDeal travelDeal = travelDealList.get(getAdapterPosition());
             Intent intent = new Intent(context, NewTravelDealActivity.class);
-            intent.putExtra("TravelDeal",travelDeal);
+            intent.putExtra("TravelDeal", travelDeal);
             context.startActivity(intent);
         }
     }

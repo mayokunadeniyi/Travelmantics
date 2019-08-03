@@ -37,10 +37,11 @@ public class FirebaseUtil {
     private static final int RC_SIGN_IN = 123;
     public static boolean isAdmin;
 
-    private FirebaseUtil(){}
+    private FirebaseUtil() {
+    }
 
-    public static void openFbReference(String reference, final TravelDealListActivity activity){
-        if (firebaseUtil == null){
+    public static void openFbReference(String reference, final TravelDealListActivity activity) {
+        if (firebaseUtil == null) {
             firebaseUtil = new FirebaseUtil();
             firebaseDatabase = FirebaseDatabase.getInstance();
             storageReference = FirebaseStorage.getInstance().getReference();
@@ -49,9 +50,9 @@ public class FirebaseUtil {
             authStateListener = new FirebaseAuth.AuthStateListener() {
                 @Override
                 public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                    if (firebaseAuth.getCurrentUser() == null){
+                    if (firebaseAuth.getCurrentUser() == null) {
                         FirebaseUtil.signIn();
-                    }else{
+                    } else {
                         String userID = firebaseAuth.getUid();
                         checkIfAdmin(userID);
                     }
@@ -102,7 +103,7 @@ public class FirebaseUtil {
         reference.addChildEventListener(eventListener);
     }
 
-    public static void signIn(){
+    public static void signIn() {
         List<AuthUI.IdpConfig> providers = Arrays.asList(
                 new AuthUI.IdpConfig.EmailBuilder().build(),
                 new AuthUI.IdpConfig.GoogleBuilder().build());
@@ -116,11 +117,11 @@ public class FirebaseUtil {
                 RC_SIGN_IN);
     }
 
-    public static void attachListener(){
+    public static void attachListener() {
         firebaseAuth.addAuthStateListener(authStateListener);
     }
 
-    public static void detachListener(){
+    public static void detachListener() {
         firebaseAuth.removeAuthStateListener(authStateListener);
     }
 

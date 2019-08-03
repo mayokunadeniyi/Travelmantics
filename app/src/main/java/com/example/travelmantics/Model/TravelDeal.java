@@ -62,11 +62,11 @@ public class TravelDeal implements Serializable {
         this.imageUrl = imageUrl;
     }
 
-    public String getImageName(){
+    public String getImageName() {
         return imageName;
     }
 
-    public void setImageName(String imageName){
+    public void setImageName(String imageName) {
         this.imageName = imageName;
     }
 

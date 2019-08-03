@@ -39,14 +39,13 @@ public class TravelDealListActivity extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private DatabaseReference databaseReference;
-    private int RC_SIGN_IN = 123;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_travel_deal_list);
 
-        FirebaseUtil.openFbReference("traveldeals",this);
+        FirebaseUtil.openFbReference("traveldeals", this);
         firebaseDatabase = FirebaseUtil.firebaseDatabase;
         databaseReference = FirebaseUtil.databaseReference;
         travelDealList = FirebaseUtil.travelDealArrayList;
@@ -83,7 +82,7 @@ public class TravelDealListActivity extends AppCompatActivity {
                 travelDeal.setId(dataSnapshot.getKey());
                 travelDealList.add(travelDeal);
                 Collections.reverse(travelDealList);
-                travelDealRecyclerViewAdapter = new TravelDealRecyclerViewAdapter(TravelDealListActivity.this,travelDealList);
+                travelDealRecyclerViewAdapter = new TravelDealRecyclerViewAdapter(TravelDealListActivity.this, travelDealList);
                 recyclerView.setAdapter(travelDealRecyclerViewAdapter);
                 travelDealRecyclerViewAdapter.notifyDataSetChanged();
             }
@@ -113,12 +112,12 @@ public class TravelDealListActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.travel_list_activity_menu,menu);
+        getMenuInflater().inflate(R.menu.travel_list_activity_menu, menu);
         MenuItem menuItem = menu.findItem(R.id.insert_new_deal);
 
-        if (FirebaseUtil.isAdmin == true){
+        if (FirebaseUtil.isAdmin == true) {
             menuItem.setVisible(true);
-        }else {
+        } else {
             menuItem.setVisible(false);
         }
         return true;
@@ -126,7 +125,7 @@ public class TravelDealListActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.insert_new_deal:
                 startActivity(new Intent(TravelDealListActivity.this, NewTravelDealActivity.class));
                 return true;
@@ -142,14 +141,14 @@ public class TravelDealListActivity extends AppCompatActivity {
                 .signOut(this)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     public void onComplete(@NonNull Task<Void> task) {
-                        Toast.makeText(getApplicationContext(),"Signed out!",Toast.LENGTH_LONG);
+                        Toast.makeText(getApplicationContext(), "Signed out!", Toast.LENGTH_LONG);
                         FirebaseUtil.attachListener();
                     }
                 });
         FirebaseUtil.detachListener();
     }
 
-    public void showMenu(){
+    public void showMenu() {
         invalidateOptionsMenu();
     }
 }

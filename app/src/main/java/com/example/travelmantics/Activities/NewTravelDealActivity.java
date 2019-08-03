@@ -100,7 +100,7 @@ public class NewTravelDealActivity extends AppCompatActivity {
             imageURI = result.getUri();
         } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
             Exception error = result.getError();
-            Log.d("ImageError",error.getMessage());
+            Log.d("ImageError", error.getMessage());
         }
         dealImage.setImageURI(imageURI);
 
@@ -156,35 +156,34 @@ public class NewTravelDealActivity extends AppCompatActivity {
         progressDialog.setMessage("Saving deal...");
         progressDialog.show();
 
-        if (travelDeal.getId() != null){
+        if (travelDeal.getId() != null) {
 
             travelDeal.setImageUrl(travelDeal.getImageUrl());
             travelDeal.setTitle(titleTxt.getText().toString());
             travelDeal.setDescription(descriptionTxt.getText().toString());
             travelDeal.setPrice(priceTxt.getText().toString());
 
-                databaseReference.child(travelDeal.getId()).setValue(travelDeal).addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Toast.makeText(NewTravelDealActivity.this,"Deal Saved",Toast.LENGTH_LONG).show();
-                        clean();
-                        backToTravelListActivity();
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.d("PushError",e.getMessage());
-                    }
-                });
-        }
-        else {
+            databaseReference.child(travelDeal.getId()).setValue(travelDeal).addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                    Toast.makeText(NewTravelDealActivity.this, "Deal Saved", Toast.LENGTH_LONG).show();
+                    clean();
+                    backToTravelListActivity();
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Log.d("PushError", e.getMessage());
+                }
+            });
+        } else {
             final StorageReference filePath = storageReference.child("TravelDeal_Images")
                     .child((Objects.requireNonNull(imageURI.getLastPathSegment())));
             filePath.putFile(imageURI).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onComplete(@NonNull final Task<UploadTask.TaskSnapshot> task) {
                     String imageName = task.getResult().getStorage().getPath();
-                    Log.d("imageName",imageName);
+                    Log.d("imageName", imageName);
                     travelDeal.setImageName(imageName);
                     if (task.isSuccessful()) {
                         filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
@@ -196,19 +195,19 @@ public class NewTravelDealActivity extends AppCompatActivity {
                                 travelDeal.setDescription(descriptionTxt.getText().toString());
                                 travelDeal.setPrice(priceTxt.getText().toString());
 
-                                if (travelDeal.getId() == null){
-                                    Log.d("checkID",travelDeal.getImageUrl() + "\n\n" + travelDeal.getTitle() + "\n\n" + travelDeal.getDescription());
+                                if (travelDeal.getId() == null) {
+                                    Log.d("checkID", travelDeal.getImageUrl() + "\n\n" + travelDeal.getTitle() + "\n\n" + travelDeal.getDescription());
                                     databaseReference.push().setValue(travelDeal).addOnSuccessListener(new OnSuccessListener<Void>() {
                                         @Override
                                         public void onSuccess(Void aVoid) {
-                                            Toast.makeText(NewTravelDealActivity.this,"Deal Saved",Toast.LENGTH_LONG).show();
+                                            Toast.makeText(NewTravelDealActivity.this, "Deal Saved", Toast.LENGTH_LONG).show();
                                             clean();
                                             backToTravelListActivity();
                                         }
                                     }).addOnFailureListener(new OnFailureListener() {
                                         @Override
                                         public void onFailure(@NonNull Exception e) {
-                                            Log.d("PushError",e.getMessage());
+                                            Log.d("PushError", e.getMessage());
                                         }
                                     });
                                 }
@@ -222,7 +221,7 @@ public class NewTravelDealActivity extends AppCompatActivity {
     }
 
     private void deleteDeal() {
-        if (travelDeal == null) {
+        if (travelDeal.getId() == null) {
             Toast.makeText(getApplicationContext(), "Save the deal before deleting", Toast.LENGTH_SHORT).show();
             return;
         } else {
@@ -237,14 +236,14 @@ public class NewTravelDealActivity extends AppCompatActivity {
                     picRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
-                          Log.d("Delete Image","Successful deletion");
-                            Toast.makeText(NewTravelDealActivity.this,"Deal Deleted!",Toast.LENGTH_SHORT).show();
+                            Log.d("Delete Image", "Successful deletion");
+                            Toast.makeText(NewTravelDealActivity.this, "Deal Deleted!", Toast.LENGTH_SHORT).show();
                             backToTravelListActivity();
                         }
                     }).addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            Log.d("Delete Image",e.getMessage());
+                            Log.d("Delete Image", e.getMessage());
                         }
                     });
                 }
