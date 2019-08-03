@@ -44,16 +44,13 @@ public class TravelDealListActivity extends AppCompatActivity {
         firebaseDatabase = FirebaseUtil.firebaseDatabase;
         databaseReference = FirebaseUtil.databaseReference;
         travelDealList = FirebaseUtil.travelDealArrayList;
+        databaseReference.keepSynced(true);
 
         recyclerView = (RecyclerView) findViewById(R.id.travel_deal_recyclerview);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-    }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
         databaseReference.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
@@ -61,7 +58,6 @@ public class TravelDealListActivity extends AppCompatActivity {
                 travelDeal.setId(dataSnapshot.getKey());
                 travelDealList.add(travelDeal);
                 Collections.reverse(travelDealList);
-
                 travelDealRecyclerViewAdapter = new TravelDealRecyclerViewAdapter(TravelDealListActivity.this,travelDealList);
                 recyclerView.setAdapter(travelDealRecyclerViewAdapter);
                 travelDealRecyclerViewAdapter.notifyDataSetChanged();
@@ -87,6 +83,12 @@ public class TravelDealListActivity extends AppCompatActivity {
 
             }
         });
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
     }
 
     @Override
@@ -99,6 +101,8 @@ public class TravelDealListActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         FirebaseUtil.attachListener();
+        Toast.makeText(this,"Welcome back!",Toast.LENGTH_LONG).show();
+
     }
 
     @Override

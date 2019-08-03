@@ -55,7 +55,6 @@ public class FirebaseUtil {
                         String userID = firebaseAuth.getUid();
                         checkIfAdmin(userID);
                     }
-                    Toast.makeText(callerActivity.getBaseContext(),"Welcome back!",Toast.LENGTH_LONG).show();
                 }
             };
             connectStorage();
